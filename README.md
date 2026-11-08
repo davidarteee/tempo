@@ -47,6 +47,7 @@
 | Base de dades i comptes | Supabase, organització **David Arté**, projecte **`tempo`** · ref `irkzvtnrofzbivolqwji` · regió `eu-west-1` · pla gratuït · [panell](https://supabase.com/dashboard/project/irkzvtnrofzbivolqwji) |
 | URL de Supabase | `https://irkzvtnrofzbivolqwji.supabase.co` |
 | Inici de sessió amb Google | Google Cloud, projecte **Tempo** · client OAuth "Aplicació web" (ID comença per `83590316489-`) · pantalla de consentiment en mode **prova** |
+| App en producció | **https://tempo-weld-nine.vercel.app** |
 | Allotjament | Vercel, projecte **tempo**, connectat al repositori (cada `git push` a `main` desplega). Supabase connectat amb la integració oficial de Vercel |
 | Secrets | Fitxer `.env.local` (no és a git). Noms a [`.env.example`](.env.example) |
 | Desenvolupament local | `npm run dev -- -p 3101` → http://localhost:3101 (port registrat a Supabase i Google) |
@@ -74,7 +75,7 @@
   - amb la CLI: `npx supabase link --project-ref irkzvtnrofzbivolqwji` i `npx supabase db push`.
   Després revisa *Advisors* (seguretat i rendiment) i anota-la aquí.
 - **Auth:** proveïdor Google activat amb el client OAuth de Google Cloud.
-  *URL Configuration*: Site URL = domini de Vercel · Redirect URLs `https://<domini-vercel>/auth/callback` i
+  *URL Configuration*: Site URL `https://tempo-weld-nine.vercel.app` · Redirect URLs `https://tempo-weld-nine.vercel.app/auth/callback` i
   `http://localhost:3101/auth/callback`. Si l'adreça s'escriu sense `https://`, en entrar surt l'error
   `{"error":"requested path is invalid"}`.
 - **Avisos acceptats a propòsit:** `notification_log` i `google_sync_records` tenen RLS sense polítiques (només hi
@@ -88,9 +89,9 @@
 - Àmbits de la pantalla de consentiment: `calendar.events`, `calendar.readonly` (més `openid`/`email`).
 - Usuaris de prova: el compte del propietari. Per obrir l'app a altres persones caldria publicar-la i passar la
   verificació de Google (àmbits sensibles de Calendar).
-- Client OAuth — orígens autoritzats: `http://localhost:3101` (+ domini de Vercel).
+- Client OAuth — orígens autoritzats: `http://localhost:3101` i `https://tempo-weld-nine.vercel.app`.
   URI de redirecció: `https://irkzvtnrofzbivolqwji.supabase.co/auth/v1/callback`,
-  `http://localhost:3101/api/google/callback` (+ `https://<domini>/api/google/callback`).
+  `http://localhost:3101/api/google/callback` i `https://tempo-weld-nine.vercel.app/api/google/callback`.
 
 ### Variables a Vercel
 
@@ -112,7 +113,7 @@
 | `GOOGLE_STATE_SECRET`, `CRON_SECRET` | Cadenes aleatòries generades (`node -e "console.log(require('crypto').randomBytes(24).toString('base64url'))"`) |
 | `NEXT_PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY` | Generades amb `npx web-push generate-vapid-keys` (si es canvien, els dispositius s'han de tornar a subscriure) |
 | `VAPID_SUBJECT` | `mailto:` del propietari |
-| `NEXT_PUBLIC_APP_URL` | `http://localhost:3101` en local; el domini de Vercel en producció |
+| `NEXT_PUBLIC_APP_URL` | `http://localhost:3101` en local; a Vercel no cal (seria `https://tempo-weld-nine.vercel.app`) |
 
 ### Què funciona i què falta
 
@@ -128,12 +129,13 @@
 - Notificacions push amb l'app tancada al mòbil (pg_cron → Vercel → Web Push) verificades.
 
 **Pendent**
-- [ ] Anotar aquí el domini exacte de Vercel i comprovar que és a Google Cloud (orígens i `/api/google/callback`).
+- [x] Domini de producció: `https://tempo-weld-nine.vercel.app`.
+- [ ] Comprovar que a Google Cloud hi ha l'origen `https://tempo-weld-nine.vercel.app` i la redirecció `https://tempo-weld-nine.vercel.app/api/google/callback`, i connectar Google Calendar.
 - [ ] Provar la connexió amb Google Calendar (*Ajustos → Google Calendar → Connecta*).
 - [x] Tasca programada de recordatoris a Supabase (pg_cron).
 - [x] Secrets `tempo_app_url` i `tempo_cron_secret` a Vault; avisos push amb l'app tancada provats al mòbil.
 - [x] App instal·lada al mòbil.
-- [ ] Provar l'app instal·lada a l'ordinador.
+- [x] App instal·lada a l'ordinador.
 
 ### Convencions per continuar
 
@@ -514,3 +516,4 @@ Per rebre'ls en un dispositiu: obre Tempo (a l'iPhone, **des de la icona de la p
   subscripció i missatges d'error clars (abans podia dir "Activats" sense estar subscrit).
 - Verificat en producció: 1 dispositiu subscrit, la tasca `tempo-reminders` s'executa cada minut amb resposta
   200 de l'app i el primer recordatori s'ha enviat.
+- Domini de producció anotat (`https://tempo-weld-nine.vercel.app`); app instal·lada al mòbil i a l'ordinador.
