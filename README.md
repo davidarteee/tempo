@@ -125,13 +125,15 @@
 
 - Desplegat a Vercel; inici de sessió amb Google funcionant en producció.
 - Botó de mode clar/fosc i instal·lació com a app (mòbil i ordinador).
+- Notificacions push amb l'app tancada al mòbil (pg_cron → Vercel → Web Push) verificades.
 
 **Pendent**
 - [ ] Anotar aquí el domini exacte de Vercel i comprovar que és a Google Cloud (orígens i `/api/google/callback`).
 - [ ] Provar la connexió amb Google Calendar (*Ajustos → Google Calendar → Connecta*).
 - [x] Tasca programada de recordatoris a Supabase (pg_cron).
-- [ ] Guardar `tempo_app_url` i `tempo_cron_secret` a Supabase Vault i provar els avisos amb l'app tancada.
-- [ ] Provar l'app instal·lada (PWA) a l'iPhone i a l'ordinador.
+- [x] Secrets `tempo_app_url` i `tempo_cron_secret` a Vault; avisos push amb l'app tancada provats al mòbil.
+- [x] App instal·lada al mòbil.
+- [ ] Provar l'app instal·lada a l'ordinador.
 
 ### Convencions per continuar
 
@@ -510,3 +512,5 @@ Per rebre'ls en un dispositiu: obre Tempo (a l'iPhone, **des de la icona de la p
   `push_cron`) amb l'adreça i el secret a Vault; ruta `/api/push/test`.
 - Ajustos → Notificacions: estat real per dispositiu, botó *Prova des del servidor*, re-registre automàtic de la
   subscripció i missatges d'error clars (abans podia dir "Activats" sense estar subscrit).
+- Verificat en producció: 1 dispositiu subscrit, la tasca `tempo-reminders` s'executa cada minut amb resposta
+  200 de l'app i el primer recordatori s'ha enviat.
