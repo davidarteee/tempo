@@ -1,26 +1,222 @@
 @import "tailwindcss";
 
+/*
+ * Sistema de disseny de Tempo.
+ * Inspirat en les interfícies natives d'Apple: tipografia de sistema, superfícies
+ * planes, separadors fins, color utilitzat amb moderació.
+ */
+
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  color-scheme: light;
+  --bg: #ffffff;
+  --bg-grouped: #f2f2f7;
+  --surface: #ffffff;
+  --surface-2: #f7f7f9;
+  --surface-3: #efeff3;
+  --elevated: #ffffff;
+  --fill: rgba(120, 120, 128, 0.12);
+  --fill-strong: rgba(120, 120, 128, 0.2);
+  --text: #1c1c1e;
+  --text-2: rgba(60, 60, 67, 0.72);
+  --text-3: rgba(60, 60, 67, 0.48);
+  --separator: rgba(60, 60, 67, 0.14);
+  --separator-strong: rgba(60, 60, 67, 0.24);
+  --accent: #e8473b;
+  --accent-contrast: #ffffff;
+  --accent-soft: rgba(232, 71, 59, 0.1);
+  --link: #0a7aff;
+  --success: #28a745;
+  --danger: #e5383b;
+  --shadow-pop: 0 10px 38px -10px rgba(22, 23, 24, 0.22), 0 10px 20px -15px rgba(22, 23, 24, 0.14);
+  --overlay: rgba(0, 0, 0, 0.28);
+  --hour-line: rgba(60, 60, 67, 0.1);
+  --sidebar: #f7f7f9;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #000000;
+  --bg-grouped: #000000;
+  --surface: #1c1c1e;
+  --surface-2: #161618;
+  --surface-3: #2c2c2e;
+  --elevated: #232325;
+  --fill: rgba(118, 118, 128, 0.24);
+  --fill-strong: rgba(118, 118, 128, 0.34);
+  --text: #f5f5f7;
+  --text-2: rgba(235, 235, 245, 0.68);
+  --text-3: rgba(235, 235, 245, 0.42);
+  --separator: rgba(84, 84, 88, 0.55);
+  --separator-strong: rgba(110, 110, 115, 0.7);
+  --accent: #ff5a4e;
+  --accent-contrast: #ffffff;
+  --accent-soft: rgba(255, 90, 78, 0.16);
+  --link: #3b9bff;
+  --success: #32d74b;
+  --danger: #ff5c5f;
+  --shadow-pop: 0 12px 40px -8px rgba(0, 0, 0, 0.7), 0 0 0 0.5px rgba(255, 255, 255, 0.08);
+  --overlay: rgba(0, 0, 0, 0.55);
+  --hour-line: rgba(84, 84, 88, 0.4);
+  --sidebar: #111113;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-bg: var(--bg);
+  --color-grouped: var(--bg-grouped);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-surface-3: var(--surface-3);
+  --color-elevated: var(--elevated);
+  --color-fill: var(--fill);
+  --color-fill-strong: var(--fill-strong);
+  --color-text: var(--text);
+  --color-text-2: var(--text-2);
+  --color-text-3: var(--text-3);
+  --color-separator: var(--separator);
+  --color-separator-strong: var(--separator-strong);
+  --color-accent: var(--accent);
+  --color-accent-soft: var(--accent-soft);
+  --color-link: var(--link);
+  --color-success: var(--success);
+  --color-danger: var(--danger);
+  --color-sidebar: var(--sidebar);
+  --color-inverse: var(--bg);
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Segoe UI Variable Text", "Segoe UI", system-ui, Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-display: -apple-system-headline, -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI Variable Display", "Segoe UI", system-ui, sans-serif;
+  --shadow-pop: var(--shadow-pop);
+  --ease-out-quint: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-spring: cubic-bezier(0.32, 0.72, 0, 1);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html,
+body {
+  height: 100%;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior-y: none;
+  font-feature-settings: "tnum" 0;
+}
+
+::selection {
+  background: var(--accent-soft);
+}
+
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Barres de desplaçament discretes a l'ordinador */
+@media (pointer: fine) {
+  .scroll-thin {
+    scrollbar-width: thin;
+    scrollbar-color: var(--fill-strong) transparent;
+  }
+}
+
+.no-scrollbar {
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Focus visible accessible i coherent (capa base: les utilitats el poden desactivar) */
+@layer base {
+  :focus-visible {
+    outline: 2px solid var(--link);
+    outline-offset: 2px;
+  }
+}
+
+@layer base {
+  input,
+  textarea,
+  select,
+  button {
+    font: inherit;
+    color: inherit;
+  }
+}
+
+/* Àrees segures (iPhone instal·lat) */
+.pt-safe {
+  padding-top: env(safe-area-inset-top);
+}
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* Animacions subtils */
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes sheet-up {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+@keyframes pop-in {
+  from { opacity: 0; transform: translateY(6px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes view-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes check-pop {
+  0% { transform: scale(1); }
+  40% { transform: scale(0.82); }
+  100% { transform: scale(1); }
+}
+@keyframes toast-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
+
+.anim-fade { animation: fade-in 180ms ease-out both; }
+.anim-sheet { animation: sheet-up 340ms var(--ease-spring) both; }
+@media (min-width: 640px) {
+  .anim-sheet { animation: pop-in 200ms var(--ease-out-quint) both; }
+}
+.anim-pop { animation: pop-in 200ms var(--ease-out-quint) both; }
+.anim-view { animation: view-in 220ms var(--ease-out-quint) both; }
+.anim-check { animation: check-pop 260ms ease-out; }
+.anim-toast { animation: toast-in 220ms var(--ease-out-quint) both; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 1ms !important;
+    transition-duration: 1ms !important;
+  }
+}
+
+/* Patró ratllat per a ocurrències completades / passades */
+.item-completed {
+  opacity: 0.55;
+}
+.item-completed .item-title {
+  text-decoration: line-through;
+  text-decoration-thickness: 1px;
+}
+
+/* Durant l'arrossegament */
+.dragging-active,
+.dragging-active * {
+  cursor: grabbing !important;
+  user-select: none !important;
+  -webkit-user-select: none !important;
+}
+
+[data-drop-over] {
+  background-color: var(--accent-soft) !important;
 }

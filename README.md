@@ -1,36 +1,367 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+<p align="center">
+  <img src="public/icons/icon-192.png" width="96" height="96" alt="Tempo" />
+</p>
 
-## Getting Started
+<h1 align="center">Tempo</h1>
 
-First, run the development server:
+<p align="center">
+  Calendari personal i gestió de tasques en una sola aplicació.<br />
+  Ràpida, instal·lable com a app (PWA), funciona sense connexió i se sincronitza entre dispositius.
+</p>
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+---
+
+## Índex
+
+1. [Què és Tempo](#què-és-tempo)
+2. [Funcionalitats](#funcionalitats)
+3. [Com s'utilitza](#com-sutilitza)
+4. [Tecnologia](#tecnologia)
+5. [Arquitectura](#arquitectura)
+6. [Model de dades](#model-de-dades)
+7. [Sincronització i funcionament sense connexió](#sincronització-i-funcionament-sense-connexió)
+8. [Recurrència](#recurrència)
+9. [Google Calendar](#google-calendar)
+10. [Notificacions](#notificacions)
+11. [Seguretat](#seguretat)
+12. [Estructura del codi](#estructura-del-codi)
+13. [Desenvolupament local](#desenvolupament-local)
+14. [Configuració](#configuració)
+15. [Desplegament a Vercel](#desplegament-a-vercel)
+16. [Limitacions conegudes](#limitacions-conegudes)
+
+---
+
+## Què és Tempo
+
+Tempo uneix un **calendari** (amb l'estil net i natiu d'Apple Calendar) i un **gestor de tasques** (amb la
+flexibilitat d'Apple Reminders). L'objectiu és obrir l'app i entendre a l'instant:
+
+- què he de fer **avui**,
+- què tinc previst **aquesta setmana**,
+- quines **tasques encara he de programar**.
+
+Esdeveniments i tasques són entitats independents, però es veuen junts al mateix calendari. Una tasca pot existir
+sense data (a la safata) i, quan rep una data, apareix automàticament al calendari.
+
+## Funcionalitats
+
+### Avui
+- Data d'avui i resum ("3 esdeveniments · 2 tasques pendents") amb barra de progrés de les tasques del dia.
+- **Tot el dia**: esdeveniments i tasques sense hora, en una secció pròpia.
+- **Agenda**: els elements amb hora en ordre cronològic, amb un marcador d'**ara**; els passats es mostren atenuats.
+- **Endarrerides**: tasques que havien de fer-se abans d'avui i encara no estan fetes.
+- **Per programar**: tasques sense data, amb accés ràpid per assignar-ne una.
+- **Propers dies**: resum dels 7 dies següents.
+- Afegir una tasca per avui escrivint-la i prement Enter.
+
+### Calendari
+- Vistes **diària, setmanal, mensual, anual i llista** (agenda cronològica).
+- Els elements **amb hora** van a la línia temporal; els de **tot el dia** van a un carril superior i no ocupen
+  espai a la línia horària. Els esdeveniments de diversos dies es mostren com una barra contínua.
+- Els elements que se solapen es col·loquen en columnes perquè sempre siguin llegibles.
+- **Clic en un espai buit** → nou esdeveniment a aquella hora.
+- **Arrossegar** per moure (entre hores, entre dies o cap al carril de tot el dia) i **estirar la vora inferior**
+  per canviar la durada. Al mòbil, mantén premut un moment per començar a arrossegar.
+- Navegació amb fletxes, botó "Avui", mini calendari lateral i lliscament horitzontal al mòbil.
+- A l'ordinador, la barra lateral mostra les **tasques per programar**: arrossega-les a un dia o a una hora.
+
+### Tasques
+- Pestanyes: **Pendents**, **Sense data**, **Programades** i **Fetes** (historial agrupat per mes).
+- Filtre per categoria.
+- Cada tasca pot tenir: títol, notes, **subtasques** (llista de verificació), data i hora programades, durada,
+  **data límit**, categoria, repetició i recordatoris.
+- Programar una tasca: icona del calendari (Avui, Demà, Aquest cap de setmana, La setmana vinent o una data
+  concreta), editant-la, o arrossegant-la al calendari.
+- Completar amb una casella rodona; apareix un avís amb **Desfés**.
+- Sense prioritats ni estats ("pendent", "en curs"...): una tasca està feta o no.
+
+### Esdeveniments
+- Títol, ubicació, notes, inici i final (hora final opcional), tot el dia, categoria, repetició i recordatoris.
+- Edició i eliminació amb **Desfés**.
+
+### Categories
+- Compartides entre esdeveniments i tasques (un únic sistema).
+- Crear, reanomenar, canviar el color (paleta o color personalitzat) i eliminar.
+- En eliminar una categoria en ús, es demana a quina categoria moure'n els elements (o deixar-los sense).
+- Cada element hereta el color de la seva categoria a tota l'app.
+
+### Ajustos
+- Tema **automàtic, clar o fosc**.
+- Inici de setmana, mostrar o amagar tasques fetes al calendari, durada i avís per defecte.
+- Gestió de categories, notificacions, Google Calendar, estat de la sincronització i instal·lació de l'app.
+
+### Dreceres de teclat (ordinador)
+
+| Tecla | Acció |
+|---|---|
+| `N` | Nou esdeveniment |
+| `T` | Nova tasca |
+| `D` `S` `M` `A` `L` | Vista dia / setmana / mes / any / llista |
+| `←` `→` | Anterior / següent |
+| `.` | Anar a avui |
+| `Esc` | Tancar |
+
+## Com s'utilitza
+
+1. Entra amb el teu compte de Google.
+2. A **Avui**, escriu una tasca i prem Enter, o toca **+** per crear un esdeveniment o una tasca.
+3. A **Tasques**, apunta tot el que has de fer encara que no sàpigues quan. Després programa-ho arrossegant-ho al
+   calendari o amb la icona del calendari.
+4. A **Calendari**, fes clic en una hora buida per crear un esdeveniment, o arrossega'l per moure'l.
+5. A **Ajustos**, connecta Google Calendar i activa les notificacions.
+6. Instal·la l'app: al mòbil, *Comparteix → Afegeix a la pantalla d'inici* (iPhone) o *Instal·la l'aplicació*
+   (Android); a l'ordinador, la icona d'instal·lar de la barra d'adreces.
+
+## Tecnologia
+
+| Àmbit | Eina |
+|---|---|
+| Framework | Next.js 16 (App Router) + React 19 + TypeScript |
+| Estils | Tailwind CSS v4, components propis inspirats en iOS/macOS |
+| Dades locals | IndexedDB amb Dexie (`dexie-react-hooks` per a lectures reactives) |
+| Backend | Supabase: Postgres, Auth (Google), Realtime, polítiques RLS |
+| Recurrència | `rrule` (RFC 5545) |
+| Dates | `date-fns` (locale català) + utilitats pròpies de zona horària amb `Intl` |
+| Push | Web Push API + `web-push` |
+| Validació | `zod` a les rutes de servidor |
+| Proves | Vitest + `fake-indexeddb` |
+| Allotjament | Vercel |
+
+## Arquitectura
+
+```
+Navegador                                                     Servidor
+┌───────────────────────────────────────────────┐            ┌──────────────────────────────┐
+│ UI (React)                                    │            │ Supabase                     │
+│   ▲ lectures reactives (Dexie liveQuery)      │            │  Postgres + RLS per usuari   │
+│   │                                           │   upsert   │  trigger Last-Write-Wins     │
+│ IndexedDB ◀── repo.ts (mutacions) ── outbox ──┼──────────▶ │  server_updated_at (cursor)  │
+│   ▲                                           │            │  Realtime (postgres_changes) │
+│   └──── sync/engine.ts ◀── pull + realtime ───┼─────────── │                              │
+│                                               │            ├──────────────────────────────┤
+│ Service Worker: closca offline + push         │            │ Rutes /api de Next (Vercel)  │
+└───────────────────────────────────────────────┘            │  /api/google/*  ↔ Google API │
+                                                             │  /api/cron/reminders → push  │
+                                                             └──────────────────────────────┘
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+**Local-first.** La interfície llegeix sempre d'IndexedDB i escriu primer a IndexedDB. Per això crear, editar o
+completar és instantani i tot funciona sense connexió. Cada escriptura s'afegeix a una cua de sortida (*outbox*)
+dins la mateixa transacció, i el motor de sincronització la puja quan hi ha xarxa.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+**Mode local.** Si no hi ha variables de Supabase, l'app funciona sense compte (dades només al navegador).
+En iniciar sessió més endavant, aquestes dades s'adopten al compte i es pugen.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+**Rendiment.** Les taules es llegeixen una sola vegada a memòria i cada vista només calcula les ocurrències del seu
+interval visible (memoritzat). Els esdeveniments recurrents no es dupliquen a la base de dades: s'expandeixen al vol.
 
-## Learn More
+## Model de dades
 
-To learn more about Next.js, take a look at the following resources:
+| Taula | Contingut |
+|---|---|
+| `profiles` | Perfil de l'usuari (es crea automàticament en registrar-se) |
+| `calendars` | Calendari per defecte de cada usuari; preparat per a calendaris compartits |
+| `categories` | Categories compartides (nom, color, ordre) |
+| `events` | Esdeveniments: hora o tot el dia, zona horària, regla `rrule`, recordatoris (`integer[]`), `series_parent_id` |
+| `event_exceptions` | Ocurrències concretes modificades o cancel·lades |
+| `tasks` | Tasques: data límit, data/hora programades, durada, `rrule`, compleció, recordatoris |
+| `task_subtasks` | Subtasques |
+| `task_exceptions` | Estat per ocurrència de tasques recurrents (feta, moguda, cancel·lada) |
+| `push_subscriptions` | Dispositius subscrits a notificacions |
+| `notification_log` | Registre per no enviar el mateix avís dues vegades |
+| `google_integrations` | Tokens de Google (inaccessibles des del navegador) |
+| `google_sync_records` | Vincle entre esdeveniments de Tempo i de Google (etag i empremta) |
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Totes les files sincronitzables tenen `user_id`, `updated_at` (hora del canvi al client), `server_updated_at`
+(assignat pel servidor) i `deleted_at` (esborrat lògic, necessari perquè els altres dispositius s'assabentin).
+En registrar-se, un trigger crea el perfil, el calendari i les categories inicials
+(Personal, Universitat, Treball, Esport, Altres).
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+**Preparat per al futur multiusuari:** per afegir calendaris compartits n'hi ha prou amb una taula
+`calendar_members (calendar_id, user_id, role)` i ampliar les polítiques RLS amb un `EXISTS` sobre aquesta taula.
 
-## Deploy on Vercel
+Les migracions són a [`supabase/migrations`](supabase/migrations).
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Sincronització i funcionament sense connexió
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- **Pujada (push):** llegeix l'estat actual de cada fila pendent (els canvis successius d'una mateixa fila es
+  fusionen) i en fa *upsert* per lots, respectant l'ordre de les claus foranes. Reintentar és segur (idempotent).
+- **Baixada (pull):** per a cada taula, demana les files amb `server_updated_at` posterior a l'últim cursor.
+- **Temps real:** Supabase Realtime aplica a l'instant els canvis d'altres dispositius i, en reconnectar,
+  es fa un pull per recuperar el que s'hagi perdut.
+- **Conflictes:** *Last-Write-Wins* per fila segons `updated_at`, aplicat al servidor (trigger) i al client.
+  Una fila amb canvis locals pendents no es sobreescriu fins que s'ha pujat.
+- **Duplicats:** els IDs són UUID generats al client; les excepcions d'ocurrències tenen un ID determinista, de
+  manera que dos dispositius que editen la mateixa ocurrència sense connexió no creen dues files.
+- **Errors:** reintents amb espera exponencial; els canvis que el servidor rebutja definitivament es mostren a
+  *Ajustos → Sincronització* per tornar-los a provar o descartar-los.
+- **Diverses pestanyes:** un *Web Lock* garanteix que només una sincronitza alhora.
+- **Indicador:** la barra lateral (o un indicador discret al mòbil) mostra si estàs sense connexió i quants canvis
+  queden pendents.
+- **Service Worker:** guarda la closca de l'app i els recursos estàtics, de manera que s'obre sense xarxa.
+
+## Recurrència
+
+- Cada dia, cada dia feiner, cada setmana, cada 2 setmanes, cada mes, cada any i **regles personalitzades**
+  (interval, dies de la setmana, "el segon dimarts de cada mes", final per data o per nombre de vegades).
+- Format RFC 5545 (`RRULE`), el mateix que fa servir Google Calendar.
+- En editar o eliminar una ocurrència es pregunta l'abast:
+  1. **Només aquesta ocurrència** → es crea una excepció.
+  2. **Aquesta i les futures** → la sèrie es divideix en dues (la nova apunta a l'original amb `series_parent_id`).
+  3. **Totes les ocurrències** → es modifica la sèrie; si canvia l'hora, les excepcions es desplacen igual.
+- Les recurrències s'expandeixen en "hora de paret" de la zona horària de l'element, de manera que una classe a
+  les 10:00 continua a les 10:00 després del canvi d'horari d'estiu.
+- Les tasques recurrents es completen per ocurrència (completar la d'avui no completa la de demà).
+
+## Google Calendar
+
+Integració **opcional**: si no està configurada, l'app funciona igual.
+
+- Connexió OAuth des d'*Ajustos → Google Calendar*. El token de refresc es desa només al servidor.
+- Sincronització **bidireccional** amb el calendari principal: importació inicial (últim any i futur), creacions,
+  modificacions, eliminacions, sèries recurrents i ocurrències modificades o cancel·lades.
+- **Sense bucles ni duplicats:** es desa l'etag de Google i una empremta del contingut local després de cada
+  operació; un canvi només es propaga si realment és nou. Els esdeveniments creats des de Tempo porten un
+  identificador propi a Google per tornar-los a reconèixer.
+- **Conflictes:** si un esdeveniment ha canviat als dos llocs, guanya la modificació més recent.
+- S'executa en obrir l'app, cada 5 minuts mentre és visible i poc després de cada canvi.
+- **Les tasques no s'envien a Google Calendar.**
+
+## Notificacions
+
+- Recordatoris per element (a l'hora, 5/10/15/30 minuts, 1–2 hores, 1–2 dies, 1 setmana o personalitzat), i
+  diversos per element.
+- Amb l'app oberta, els avisos es programen localment (funcionen fins i tot sense connexió).
+- Amb l'app tancada, el servidor envia **Web Push** (`/api/cron/reminders`, cridat cada minut).
+- Els avisos d'elements de tot el dia es calculen respecte a les 09:00 del dia.
+- **iPhone/iPad:** només funcionen amb l'app instal·lada a la pantalla d'inici (iOS 16.4 o posterior).
+
+## Seguretat
+
+- **RLS** a totes les taules: cada usuari només pot llegir i escriure les seves files.
+- Triggers que impedeixen canviar el propietari d'una fila i referenciar categories o elements d'un altre usuari.
+- Els tokens de Google i el registre de notificacions no són accessibles des del navegador; només hi accedeixen les
+  rutes de servidor amb la clau secreta.
+- La clau secreta de Supabase i els secrets de Google **mai** porten el prefix `NEXT_PUBLIC_`.
+- L'estat d'OAuth de Google va signat (HMAC) i caduca als 10 minuts.
+- El cron de recordatoris està protegit amb `CRON_SECRET`.
+
+## Estructura del codi
+
+```
+src/
+├── app/
+│   ├── (app)/            today, calendar, tasks, settings (rutes protegides)
+│   ├── api/              google/{connect,callback,sync}, push/subscribe, cron/reminders
+│   ├── auth/callback/    retorn de l'inici de sessió
+│   ├── login/
+│   ├── layout.tsx        tema sense parpelleig, registre del Service Worker
+│   └── manifest.ts       manifest de la PWA
+├── components/
+│   ├── calendar/         TimeGrid (dia/setmana), MonthView, YearView, AgendaView, MiniMonth…
+│   ├── editors/          EventEditor, TaskEditor, selectors de recurrència/recordatoris/categoria
+│   ├── tasks/            TasksScreen, TaskRow, ScheduleSheet
+│   ├── today/            TodayScreen
+│   ├── settings/         SettingsScreen, CategoryManager
+│   ├── shell/            AppShell, AuthGate, indicador de sincronització, recordatoris, Google
+│   └── ui/               primitives, Sheet (full mòbil / diàleg), avisos i diàlegs
+└── lib/
+    ├── db/               IndexedDB (local.ts), mutacions i lògica de sèries (repo.ts), IDs
+    ├── sync/             motor de sincronització
+    ├── recurrence/       RRULE i motor d'ocurrències (comú a client i servidor)
+    ├── google/           OAuth, mapatge i sincronització
+    ├── notifications/    càlcul de recordatoris i Web Push
+    ├── time/             dates i zones horàries
+    ├── data/             proveïdor de dades reactiu i derivacions de tasques
+    └── ui/               estat de la interfície, accions, arrossegar i deixar anar
+public/sw.js              Service Worker
+supabase/migrations/      esquema de la base de dades
+tests/                    proves unitàries
+```
+
+## Desenvolupament local
+
+Requisits: Node.js 20 o superior.
+
+```bash
+npm install
+cp .env.example .env.local   # i omple les variables (vegeu Configuració)
+npm run dev -- -p 3101       # http://localhost:3101
+```
+
+| Ordre | Què fa |
+|---|---|
+| `npm run dev` | Servidor de desenvolupament |
+| `npm run build` | Compilació de producció |
+| `npm test` | Proves unitàries (recurrència, sèries, tasques, categories, mapatge de Google) |
+| `npm run typecheck` | Comprovació de tipus |
+| `npm run lint` | ESLint |
+| `npm run icons` | Regenera les icones de la PWA |
+
+> El Service Worker només s'activa en producció (o en desenvolupament si defineixes `localStorage['tempo:sw-dev']`).
+
+## Configuració
+
+Totes les variables són a [`.env.example`](.env.example).
+
+| Variable | Obligatòria | Ús |
+|---|---|---|
+| `NEXT_PUBLIC_SUPABASE_URL` | Per a comptes | URL del projecte de Supabase |
+| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Per a comptes | Clau publicable (o la clau `anon` antiga) |
+| `SUPABASE_SECRET_KEY` | Google i push | Clau secreta, **només servidor** |
+| `NEXT_PUBLIC_APP_URL` | Google | URL pública de l'app (per a la redirecció d'OAuth) |
+| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | Google | Client OAuth de Google Cloud |
+| `GOOGLE_STATE_SECRET` | Google | Cadena aleatòria per signar l'estat d'OAuth |
+| `NEXT_PUBLIC_VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY` | Push | Claus VAPID (`npx web-push generate-vapid-keys`) |
+| `VAPID_SUBJECT` | Push | `mailto:` de contacte |
+| `CRON_SECRET` | Push | Protegeix `/api/cron/reminders` |
+
+### Supabase
+1. Crea un projecte i aplica les migracions de `supabase/migrations/` en ordre (SQL Editor o `npx supabase db push`).
+2. *Project Settings → API Keys*: URL, clau publicable i clau secreta.
+3. *Authentication → Sign In / Providers → Google*: activa'l amb l'ID i el secret del client OAuth de Google.
+4. *Authentication → URL Configuration*: **Site URL** = URL de producció; a **Redirect URLs** afegeix
+   `http://localhost:3101/auth/callback` i `https://<domini>/auth/callback`.
+
+### Google Cloud
+1. Activa la **Google Calendar API**.
+2. Pantalla de consentiment: tipus extern, àmbits `calendar.events` i `calendar.readonly`, i afegeix-te com a
+   usuari de prova mentre l'app no estigui verificada.
+3. Client OAuth de tipus **Aplicació web**:
+   - Orígens: `http://localhost:3101` i `https://<domini>`
+   - URI de redirecció: `https://<projecte>.supabase.co/auth/v1/callback`,
+     `http://localhost:3101/api/google/callback` i `https://<domini>/api/google/callback`
+
+### Recordatoris push (cron cada minut)
+El cron de Vercel Hobby només s'executa un cop al dia; es recomana **pg_cron** de Supabase (activa les extensions
+`pg_cron` i `pg_net`):
+
+```sql
+select cron.schedule('tempo-reminders', '* * * * *', $$
+  select net.http_get(
+    url := 'https://<domini>/api/cron/reminders',
+    headers := jsonb_build_object('Authorization', 'Bearer <CRON_SECRET>')
+  );
+$$);
+```
+
+## Desplegament a Vercel
+
+1. Importa el repositori a [vercel.com/new](https://vercel.com/new) (es detecta Next.js automàticament).
+2. A *Environment Variables*, afegeix totes les variables de la taula anterior, amb
+   `NEXT_PUBLIC_APP_URL=https://<domini>`.
+3. Desplega i, amb el domini definitiu, actualitza:
+   - Supabase → *URL Configuration* (Site URL i Redirect URLs),
+   - Google Cloud → orígens i URI de redirecció.
+4. Programa el cron de recordatoris amb el domini de producció.
+
+## Limitacions conegudes
+
+- Les hores es mostren a la zona horària del dispositiu; cada element desa la seva zona per expandir bé les
+  recurrències.
+- La resolució de conflictes és per fila, no per camp.
+- Google Calendar es sincronitza per consulta periòdica (no amb webhooks): els canvis fets a Google arriben quan
+  algun dispositiu té l'app oberta.
+- Els recordatoris de Google dels esdeveniments de tot el dia es llegeixen però no s'hi envien.
+- Les notificacions push depenen del navegador i del sistema operatiu (vegeu [Notificacions](#notificacions)).

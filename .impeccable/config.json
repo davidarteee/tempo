@@ -1,0 +1,14 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "bounce-easing",
+        "value": "var(--ease-spring)",
+        "createdAt": "2026-11-08T10:47:16.308Z",
+        "reason": "Claude: --ease-spring is cubic-bezier(0.32,0.72,0,1), all control points within 0-1 so no overshoot; it is a smooth decelerating iOS-style sheet curve, not bounce/elastic"
+      }
+    ]
+  }
+}
