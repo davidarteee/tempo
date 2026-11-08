@@ -2,6 +2,7 @@
   "version": "0.0.1",
   "configurations": [
     { "name": "tempo", "runtimeExecutable": "npm", "runtimeArgs": ["run", "start", "--", "-p", "3100"], "port": 3100 },
-    { "name": "tempo-dev", "runtimeExecutable": "npm", "runtimeArgs": ["run", "dev", "--", "-p", "3101"], "port": 3101 }
+    { "name": "tempo-dev", "runtimeExecutable": "npm", "runtimeArgs": ["run", "dev", "--", "-p", "3101"], "port": 3101 },
+    { "name": "tempo-local", "runtimeExecutable": "npm", "runtimeArgs": ["run", "dev", "--", "-p", "3102"], "port": 3102, "env": { "NEXT_PUBLIC_SUPABASE_URL": "", "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY": "" } }
   ]
 }

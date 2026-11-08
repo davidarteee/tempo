@@ -18,6 +18,8 @@ import { TaskRow } from "../tasks/TaskRow";
 import { QuickAdd } from "../tasks/TasksScreen";
 import { Button } from "../ui/primitives";
 import { cn } from "@/lib/cn";
+import { ThemeToggle } from "../shell/ThemeToggle";
+import { InstallBanner } from "../shell/InstallBanner";
 import type { CalendarItem } from "@/lib/types";
 
 export function TodayScreen() {
@@ -46,7 +48,10 @@ export function TodayScreen() {
       <div className="mx-auto grid max-w-6xl gap-8 px-4 pt-safe pb-32 md:grid-cols-[minmax(0,1fr)_320px] md:px-8 md:pb-12 lg:gap-12">
         <div className="min-w-0">
           <header className="pt-4 md:pt-8">
-            <p className="text-[13px] font-semibold tracking-wide text-accent uppercase">{capitalize(fmt(date, "EEEE"))}</p>
+            <div className="flex items-center justify-between">
+              <p className="text-[13px] font-semibold tracking-wide text-accent uppercase">{capitalize(fmt(date, "EEEE"))}</p>
+              <ThemeToggle className="-mr-2 md:hidden" />
+            </div>
             <h1 className="text-[32px] leading-tight font-bold tracking-tight md:text-[36px]">{capitalize(fmt(date, "d MMMM"))}</h1>
             <p className="mt-1 text-[14px] text-text-2">{summary(events, pendingTasks)}</p>
             {totalTasks > 0 && (
@@ -60,6 +65,8 @@ export function TodayScreen() {
               </div>
             )}
           </header>
+
+          <InstallBanner className="mt-4" />
 
           <QuickAdd date={today} placeholder="Afegeix una tasca per avui" />
 

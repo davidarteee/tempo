@@ -10,10 +10,11 @@ import { discardFailed, retryFailed, syncNow } from "@/lib/sync/engine";
 import { authHeader } from "@/lib/supabase/client";
 import { refreshGoogleStatus, runGoogleSync } from "../shell/GoogleAutoSync";
 import { confirmDialog, toast } from "../ui/feedback";
-import { currentPushSubscription, isIOS, isStandalone, pushSupport, showLocalNotification, subscribePush, unsubscribePush, vapidPublicKey } from "@/lib/notifications/push";
+import { currentPushSubscription, pushSupport, showLocalNotification, subscribePush, unsubscribePush, vapidPublicKey } from "@/lib/notifications/push";
 import { reminderLabel } from "../editors/pickers";
 import { durationLabel } from "@/lib/time/dates";
 import { useMounted } from "@/lib/ui/hooks";
+import { promptInstall, useInstallState } from "@/lib/ui/install";
 
 export function SettingsScreen() {
   const mounted = useMounted();
@@ -304,30 +305,32 @@ function SyncSection() {
   );
 }
 
-type BIPEvent = Event & { prompt: () => Promise<void>; userChoice: Promise<{ outcome: string }> };
-
 function Install() {
-  const [deferred, setDeferred] = useState<BIPEvent | null>(null);
-  const standalone = isStandalone();
-  useEffect(() => {
-    const on = (e: Event) => {
-      e.preventDefault();
-      setDeferred(e as BIPEvent);
-    };
-    window.addEventListener("beforeinstallprompt", on);
-    return () => window.removeEventListener("beforeinstallprompt", on);
-  }, []);
-  if (standalone) return null;
+  const state = useInstallState();
+  if (state === "installed") {
+    return (
+      <Group title="Aplicació">
+        <Row label="Tempo està instal·lada" icon={<Download className="size-[18px]" />}>
+          <span className="text-[13px] text-success">Activa</span>
+        </Row>
+      </Group>
+    );
+  }
+  const footer =
+    state === "ios"
+      ? "Al Safari: toca el botó Comparteix (el quadrat amb la fletxa) i després «Afegeix a la pantalla d'inici». Obre Tempo sempre des d'aquesta icona."
+      : state === "prompt"
+        ? "S'afegirà a la pantalla d'inici (mòbil) o a l'escriptori i al menú d'inici (ordinador) i s'obrirà en una finestra pròpia."
+        : "Al Chrome o l'Edge: menú ⋮ → «Instal·la Tempo» (o «Aplicacions → Instal·la aquest lloc com una aplicació»). Al Safari del Mac: Arxiu → «Afegeix al Dock».";
   return (
-    <Group title="Instal·la l'aplicació" footer={isIOS() ? "Al Safari: toca Comparteix i després \"Afegeix a la pantalla d'inici\"." : deferred ? undefined : "Fes servir l'opció \"Instal·la\" del menú del navegador."}>
+    <Group title="Instal·la l'aplicació" footer={footer}>
       <Row label="Tempo com a aplicació" icon={<Download className="size-[18px]" />}>
-        {deferred && (
+        {state === "prompt" && (
           <Button
             size="sm"
             variant="tinted"
             onClick={async () => {
-              await deferred.prompt();
-              setDeferred(null);
+              if (await promptInstall()) toast("Tempo s'ha instal·lat");
             }}
           >
             Instal·la

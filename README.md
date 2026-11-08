@@ -47,7 +47,7 @@
 | Base de dades i comptes | Supabase, organització **David Arté**, projecte **`tempo`** · ref `irkzvtnrofzbivolqwji` · regió `eu-west-1` · pla gratuït · [panell](https://supabase.com/dashboard/project/irkzvtnrofzbivolqwji) |
 | URL de Supabase | `https://irkzvtnrofzbivolqwji.supabase.co` |
 | Inici de sessió amb Google | Google Cloud, projecte **Tempo** · client OAuth "Aplicació web" (ID comença per `83590316489-`) · pantalla de consentiment en mode **prova** |
-| Allotjament | Vercel — *pendent de desplegar* |
+| Allotjament | Vercel, projecte **tempo**, connectat al repositori (cada `git push` a `main` desplega). Supabase connectat amb la integració oficial de Vercel |
 | Secrets | Fitxer `.env.local` (no és a git). Noms a [`.env.example`](.env.example) |
 | Desenvolupament local | `npm run dev -- -p 3101` → http://localhost:3101 (port registrat a Supabase i Google) |
 
@@ -62,8 +62,9 @@
   - amb la CLI: `npx supabase link --project-ref irkzvtnrofzbivolqwji` i `npx supabase db push`.
   Després revisa *Advisors* (seguretat i rendiment) i anota-la aquí.
 - **Auth:** proveïdor Google activat amb el client OAuth de Google Cloud.
-  *URL Configuration*: Site URL `http://localhost:3101` · Redirect URLs `http://localhost:3101/auth/callback`
-  (cal afegir-hi el domini de Vercel en desplegar).
+  *URL Configuration*: Site URL = domini de Vercel · Redirect URLs `https://<domini-vercel>/auth/callback` i
+  `http://localhost:3101/auth/callback`. Si l'adreça s'escriu sense `https://`, en entrar surt l'error
+  `{"error":"requested path is invalid"}`.
 - **Avisos acceptats a propòsit:** `notification_log` i `google_sync_records` tenen RLS sense polítiques (només hi
   accedeix el servidor); "índexs no usats" mentre hi hagi poques dades.
 - **Claus:** URL i clau publicable a *Project Settings → API Keys* (són públiques); clau secreta a la mateixa
@@ -78,6 +79,16 @@
 - Client OAuth — orígens autoritzats: `http://localhost:3101` (+ domini de Vercel).
   URI de redirecció: `https://irkzvtnrofzbivolqwji.supabase.co/auth/v1/callback`,
   `http://localhost:3101/api/google/callback` (+ `https://<domini>/api/google/callback`).
+
+### Variables a Vercel
+
+- La **integració de Supabase** de Vercel ha creat les variables de Supabase (`NEXT_PUBLIC_SUPABASE_URL`,
+  `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SECRET_KEY` i altres que l'app no fa servir, com `POSTGRES_*`).
+- Afegides a mà (*Settings → Environments → Production*):
+  tipus **Config** → `NEXT_PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_SUBJECT`;
+  tipus **Secret** → `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_STATE_SECRET`, `VAPID_PRIVATE_KEY`, `CRON_SECRET`.
+- `NEXT_PUBLIC_APP_URL` no cal a Vercel: si falta, el servidor fa servir l'adreça des d'on s'obre l'app.
+- Les variables noves només s'apliquen en un desplegament nou (*Deployments → ⋯ → Redeploy*).
 
 ### Variables d'entorn (on és cada valor)
 
@@ -100,8 +111,11 @@
   provada entre l'app i la base de dades.
 - 18 proves unitàries (`npm test`), `typecheck`, `lint` i `build` sense errors.
 
+- Desplegat a Vercel; inici de sessió amb Google funcionant en producció.
+- Botó de mode clar/fosc i instal·lació com a app (mòbil i ordinador).
+
 **Pendent**
-- [ ] Desplegar a Vercel i afegir el domini a Supabase i Google Cloud.
+- [ ] Anotar aquí el domini exacte de Vercel i comprovar que és a Google Cloud (orígens i `/api/google/callback`).
 - [ ] Provar la connexió amb Google Calendar (*Ajustos → Google Calendar → Connecta*).
 - [ ] Programar el cron de recordatoris (pg_cron, vegeu [Configuració](#recordatoris-push-cron-cada-minut)) i
       provar les notificacions push amb l'app tancada.
@@ -172,6 +186,20 @@ sense data (a la safata) i, quan rep una data, apareix automàticament al calend
 - Crear, reanomenar, canviar el color (paleta o color personalitzat) i eliminar.
 - En eliminar una categoria en ús, es demana a quina categoria moure'n els elements (o deixar-los sense).
 - Cada element hereta el color de la seva categoria a tota l'app.
+
+### Mode clar / fosc
+- Botó ràpid (sol / lluna): a la barra lateral a l'ordinador i a la capçalera d'**Avui** al mòbil.
+- A *Ajustos → Aparença* també hi ha l'opció **Automàtic** (segueix el sistema operatiu).
+- La preferència es desa al dispositiu i s'aplica abans de pintar la pàgina (sense parpelleig).
+
+### Instal·lació com a aplicació
+- **iPhone / iPad (Safari):** a *Avui* surt una targeta amb les instruccions: *Comparteix → Afegeix a la pantalla
+  d'inici*. Cal obrir Tempo sempre des d'aquesta icona (necessari per a les notificacions a iOS).
+- **Android (Chrome):** targeta a *Avui* amb el botó **Instal·la**.
+- **Ordinador (Chrome / Edge):** botó **Instal·la l'app** a la barra lateral, o la icona d'instal·lar de la barra
+  d'adreces. Crea una icona a l'escriptori i al menú d'inici i s'obre en una finestra pròpia.
+  **Mac (Safari):** *Arxiu → Afegeix al Dock*.
+- La targeta es pot tancar (no torna a sortir en 30 dies); les instruccions també són a *Ajustos*.
 
 ### Ajustos
 - Tema **automàtic, clar o fosc**.
@@ -463,4 +491,8 @@ $$);
 - Projecte Supabase `tempo` creat; migracions `init` i `hardening` aplicades.
 - Inici de sessió amb Google configurat i provat.
 - Correccions: colors de text dels botons (regla CSS sense capa), avís duplicat en iniciar sessió.
-- Repositori a GitHub (`davidarteee/tempo`).
+- Repositori a GitHub (`davidarteee/tempo`) i desplegament a Vercel amb la integració de Supabase.
+- Botó ràpid de mode clar/fosc (barra lateral i capçalera d'Avui).
+- Instal·lació com a app: targeta a Avui (instruccions per a iPhone, botó a Android), botó a la barra lateral de
+  l'ordinador i secció a Ajustos; captura de `beforeinstallprompt` des de l'inici.
+- Manifest: eliminat `window-controls-overlay` (la barra de títol de l'app d'escriptori no tapa la interfície).

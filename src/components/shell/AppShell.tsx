@@ -19,6 +19,8 @@ import { useTodayKey } from "@/lib/ui/hooks";
 import { cn } from "@/lib/cn";
 import { ReminderScheduler } from "./ReminderScheduler";
 import { GoogleAutoSync } from "./GoogleAutoSync";
+import { ThemeToggle } from "./ThemeToggle";
+import { InstallSidebarButton } from "./InstallBanner";
 
 const NAV = [
   { href: "/today", label: "Avui", icon: Sun },
@@ -50,7 +52,7 @@ function Inner({ children }: { children: ReactNode }) {
       <div className="flex h-dvh overflow-hidden bg-bg">
         <Sidebar />
         <main className="relative flex min-w-0 flex-1 flex-col">
-          <div className="pointer-events-none absolute top-[calc(env(safe-area-inset-top)+8px)] right-3 z-40 md:hidden">
+          <div className="pointer-events-none absolute top-[calc(env(safe-area-inset-top)+8px)] left-1/2 z-40 -translate-x-1/2 md:hidden">
             <div className="pointer-events-auto">
               <SyncIndicator compact />
             </div>
@@ -84,9 +86,10 @@ function Sidebar() {
 
   return (
     <aside className="hidden w-[260px] shrink-0 flex-col border-r border-separator bg-sidebar md:flex">
-      <div className="flex h-14 items-center gap-2 px-5">
+      <div className="flex h-14 items-center gap-2 pr-3 pl-5">
         <Logo />
-        <span className="text-[17px] font-semibold tracking-tight">Tempo</span>
+        <span className="flex-1 text-[17px] font-semibold tracking-tight">Tempo</span>
+        <ThemeToggle />
       </div>
       <nav className="space-y-0.5 px-3" aria-label="Seccions">
         {NAV.map((n) => {
@@ -130,6 +133,9 @@ function Sidebar() {
         </div>
       )}
       {!onCalendar && <div className="flex-1" />}
+      <div className="px-3 pb-1">
+        <InstallSidebarButton />
+      </div>
       <div className="border-t border-separator px-5 py-3">
         <SyncIndicator />
       </div>

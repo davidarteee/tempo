@@ -1,5 +1,6 @@
 "use client";
 import { useEffect } from "react";
+import "@/lib/ui/install"; // captura beforeinstallprompt com més aviat millor
 
 /** Registra el Service Worker (cache de l'app per a ús sense connexió + push) */
 export function ServiceWorkerRegistrar() {
