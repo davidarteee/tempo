@@ -53,8 +53,27 @@ export async function subscribePush(): Promise<{ ok: boolean; reason?: string }>
     headers: { "Content-Type": "application/json", ...(await authHeader()) },
     body: JSON.stringify(sub.toJSON()),
   });
-  if (!res.ok) return { ok: false, reason: "No s'ha pogut registrar el dispositiu." };
+  if (!res.ok) {
+    const err = ((await res.json().catch(() => ({}))) as { error?: string }).error;
+    return { ok: false, reason: `No s'ha pogut registrar el dispositiu${err ? `: ${err}` : "."}` };
+  }
   return { ok: true };
+}
+
+/** Torna a enviar la subscripció existent al servidor (idempotent) */
+export async function resyncPush(): Promise<{ ok: boolean }> {
+  const sub = await currentPushSubscription();
+  if (!sub) return { ok: false };
+  try {
+    const res = await fetch("/api/push/subscribe", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...(await authHeader()) },
+      body: JSON.stringify(sub.toJSON()),
+    });
+    return { ok: res.ok };
+  } catch {
+    return { ok: false };
+  }
 }
 
 export async function unsubscribePush() {

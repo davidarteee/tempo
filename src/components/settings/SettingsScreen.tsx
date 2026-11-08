@@ -10,7 +10,7 @@ import { discardFailed, retryFailed, syncNow } from "@/lib/sync/engine";
 import { authHeader } from "@/lib/supabase/client";
 import { refreshGoogleStatus, runGoogleSync } from "../shell/GoogleAutoSync";
 import { confirmDialog, toast } from "../ui/feedback";
-import { currentPushSubscription, pushSupport, showLocalNotification, subscribePush, unsubscribePush, vapidPublicKey } from "@/lib/notifications/push";
+import { currentPushSubscription, pushSupport, resyncPush, showLocalNotification, subscribePush, unsubscribePush, vapidPublicKey } from "@/lib/notifications/push";
 import { reminderLabel } from "../editors/pickers";
 import { durationLabel } from "@/lib/time/dates";
 import { useMounted } from "@/lib/ui/hooks";
@@ -133,25 +133,34 @@ function Notifications() {
   const { local } = useAuth();
   const support = pushSupport();
   const [perm, setPerm] = useState<NotificationPermission | "unsupported">(() => ("Notification" in window ? Notification.permission : "unsupported"));
-  const [subscribed, setSubscribed] = useState(false);
+  const [subscribed, setSubscribed] = useState<boolean | null>(null);
   const [busy, setBusy] = useState(false);
+  const serverPush = !local && !!vapidPublicKey && support === "supported";
+
   useEffect(() => {
-    void currentPushSubscription().then((s) => setSubscribed(!!s));
-  }, []);
+    // Si el dispositiu ja estava subscrit, torna a registrar-lo al servidor (per si s'havia perdut)
+    void currentPushSubscription().then(async (sub) => {
+      if (sub && serverPush) setSubscribed((await resyncPush()).ok);
+      else setSubscribed(!!sub);
+    });
+  }, [serverPush]);
 
   let footer = "Els recordatoris es configuren a cada esdeveniment o tasca. Amb l'app oberta, els avisos funcionen també sense connexió.";
-  if (support === "needs-install") footer = "A l'iPhone i l'iPad, les notificacions només funcionen si instal·les Tempo a la pantalla d'inici (Comparteix → Afegeix a la pantalla d'inici) i l'obres des d'allà (iOS 16.4 o posterior).";
+  if (support === "needs-install") footer = "A l'iPhone i l'iPad, les notificacions només funcionen amb Tempo instal·lada a la pantalla d'inici (Comparteix → Afegeix a la pantalla d'inici) i oberta des d'aquella icona (iOS 16.4 o posterior). Després torna aquí i activa-les.";
   else if (support === "unsupported") footer = "Aquest navegador no admet notificacions push. Els avisos només apareixeran amb l'app oberta.";
   else if (local) footer = "En mode local, els avisos només apareixen amb l'app oberta. Inicia sessió per rebre'ls també amb l'app tancada.";
-  else if (!vapidPublicKey) footer = "El servidor no té configurades les claus VAPID: els avisos només apareixeran amb l'app oberta.";
+  else if (!vapidPublicKey) footer = "El servidor no té la clau VAPID pública (NEXT_PUBLIC_VAPID_PUBLIC_KEY): els avisos només apareixeran amb l'app oberta.";
+  else if (subscribed) footer = "Aquest dispositiu rebrà els recordatoris encara que l'app estigui tancada. Cal activar-ho a cada dispositiu.";
+  else footer = "Activa-les a cada dispositiu on vulguis rebre els recordatoris amb l'app tancada.";
 
   const enable = async () => {
     setBusy(true);
     try {
-      if (!local && vapidPublicKey && support === "supported") {
+      if (serverPush) {
         const r = await subscribePush();
         if (!r.ok) toast(r.reason ?? "No s'han pogut activar");
-        else setSubscribed(true);
+        setSubscribed(r.ok);
+        if (r.ok) toast("Notificacions activades en aquest dispositiu");
       } else {
         await Notification.requestPermission();
       }
@@ -161,29 +170,54 @@ function Notifications() {
     }
   };
 
+  const serverTest = async () => {
+    setBusy(true);
+    try {
+      const res = await fetch("/api/push/test", { method: "POST", headers: await authHeader() });
+      const json = (await res.json().catch(() => ({}))) as { sent?: number; devices?: number; error?: string; failures?: string[] };
+      if (!res.ok) toast(json.error ?? "No s'ha pogut enviar");
+      else if (json.sent) toast(`Enviada a ${json.sent} dispositiu${json.sent === 1 ? "" : "s"}. Hauria d'arribar en uns segons.`);
+      else toast(`No s'ha pogut lliurar (${(json.failures ?? []).join(", ")}). Torna a activar les notificacions.`);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  let status: React.ReactNode;
+  if (support === "needs-install") status = <span className="text-[13px] text-text-3">Cal instal·lar l&apos;app</span>;
+  else if (perm === "unsupported" || support === "unsupported") status = <span className="text-[13px] text-text-3">No disponibles</span>;
+  else if (perm === "denied") status = <span className="text-[13px] text-text-3">Bloquejades al sistema</span>;
+  else if (perm === "granted" && (subscribed || !serverPush)) status = <span className="text-[14px] text-success">{serverPush ? "Actives" : "Només amb l'app oberta"}</span>;
+  else
+    status = (
+      <Button size="sm" variant="tinted" onClick={enable} disabled={busy || subscribed === null}>
+        Activa
+      </Button>
+    );
+
   return (
     <Group title="Notificacions" footer={footer}>
-      <Row label="Avisos" icon={<Bell className="size-[18px]" />}>
-        {perm === "granted" && (subscribed || local || !vapidPublicKey) ? (
-          <span className="text-[14px] text-success">Activats</span>
-        ) : perm === "denied" ? (
-          <span className="text-[13px] text-text-3">Bloquejats al navegador</span>
-        ) : support === "needs-install" || perm === "unsupported" ? (
-          <span className="text-[13px] text-text-3">No disponibles</span>
-        ) : (
-          <Button size="sm" variant="tinted" onClick={enable} disabled={busy}>
-            Activa
-          </Button>
-        )}
+      <Row label="En aquest dispositiu" icon={<Bell className="size-[18px]" />}>
+        {status}
       </Row>
+      {perm === "denied" && (
+        <p className="px-4 py-2 text-[12px] text-text-3">
+          Per tornar-les a permetre: iPhone → Configuració → Notificacions → Tempo; ordinador → icona del cadenat de la barra d&apos;adreces → Notificacions.
+        </p>
+      )}
+      {perm === "granted" && serverPush && subscribed && (
+        <Row label="Prova des del servidor" onClick={() => void serverTest()}>
+          <span className="text-[13px]">{busy ? "Enviant…" : "Envia"}</span>
+        </Row>
+      )}
       {perm === "granted" && (
-        <Row label="Prova" onClick={() => void showLocalNotification("Tempo", "Les notificacions funcionen correctament.", "test", "/today")}>
-          <span className="text-[13px]">Envia una notificació</span>
+        <Row label="Prova local" onClick={() => void showLocalNotification("Tempo", "Les notificacions funcionen correctament.", "test", "/today")}>
+          <span className="text-[13px]">Mostra</span>
         </Row>
       )}
       {perm === "granted" && subscribed && (
         <Row
-          label="Desactiva a aquest dispositiu"
+          label="Desactiva en aquest dispositiu"
           className="text-danger"
           onClick={async () => {
             await unsubscribePush();

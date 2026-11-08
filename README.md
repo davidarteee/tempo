@@ -57,6 +57,18 @@
   1. `20261108000000_init.sql` — taules, triggers (LWW, perfil i categories inicials), RLS, Realtime.
   2. `20261108000100_hardening.sql` — `search_path` fix, revocació d'execució de funcions de trigger, índexs de
      claus foranes.
+  3. `20261108000200_push_cron.sql` — extensions `pg_cron` i `pg_net`, funció `tempo_dispatch_reminders()` i
+     tasca programada `tempo-reminders` (cada minut) que crida `/api/cron/reminders` de l'app.
+- **Vault (secrets de Supabase)** — necessaris perquè funcionin els recordatoris amb l'app tancada:
+  `tempo_app_url` (adreça de Vercel) i `tempo_cron_secret` (el mateix valor que `CRON_SECRET` a Vercel).
+  Es creen al *SQL Editor*:
+  ```sql
+  select vault.create_secret('https://<domini>.vercel.app', 'tempo_app_url');
+  select vault.create_secret('<CRON_SECRET>', 'tempo_cron_secret');
+  ```
+  Per canviar-ne un: `select vault.update_secret(id, '<nou valor>') from vault.secrets where name = 'tempo_app_url';`
+  Per veure si la tasca s'executa: `select status, return_message, start_time from cron.job_run_details order by start_time desc limit 5;`
+  i les respostes de l'app: `select status_code, content, created from net._http_response order by created desc limit 5;`
 - **Afegir una migració nova:** crea `supabase/migrations/AAAAMMDDHHMMSS_nom.sql` i aplica-la:
   - des del panell (*SQL Editor* → enganxa i executa), o
   - amb la CLI: `npx supabase link --project-ref irkzvtnrofzbivolqwji` i `npx supabase db push`.
@@ -117,8 +129,8 @@
 **Pendent**
 - [ ] Anotar aquí el domini exacte de Vercel i comprovar que és a Google Cloud (orígens i `/api/google/callback`).
 - [ ] Provar la connexió amb Google Calendar (*Ajustos → Google Calendar → Connecta*).
-- [ ] Programar el cron de recordatoris (pg_cron, vegeu [Configuració](#recordatoris-push-cron-cada-minut)) i
-      provar les notificacions push amb l'app tancada.
+- [x] Tasca programada de recordatoris a Supabase (pg_cron).
+- [ ] Guardar `tempo_app_url` i `tempo_cron_secret` a Supabase Vault i provar els avisos amb l'app tancada.
 - [ ] Provar l'app instal·lada (PWA) a l'iPhone i a l'ordinador.
 
 ### Convencions per continuar
@@ -448,18 +460,16 @@ Totes les variables són a [`.env.example`](.env.example).
    - URI de redirecció: `https://<projecte>.supabase.co/auth/v1/callback`,
      `http://localhost:3101/api/google/callback` i `https://<domini>/api/google/callback`
 
-### Recordatoris push (cron cada minut)
-El cron de Vercel Hobby només s'executa un cop al dia; es recomana **pg_cron** de Supabase (activa les extensions
-`pg_cron` i `pg_net`):
+### Recordatoris push (cada minut)
+El cron de Vercel Hobby només s'executa un cop al dia, per això ho fa **pg_cron** de Supabase. La migració
+`20261108000200_push_cron.sql` ja crea la tasca; només cal guardar l'adreça de l'app i el `CRON_SECRET` a
+Supabase Vault (vegeu [Supabase](#supabase) a "Estat del projecte").
 
-```sql
-select cron.schedule('tempo-reminders', '* * * * *', $$
-  select net.http_get(
-    url := 'https://<domini>/api/cron/reminders',
-    headers := jsonb_build_object('Authorization', 'Bearer <CRON_SECRET>')
-  );
-$$);
-```
+Circuit complet: **pg_cron** (cada minut) → `GET https://<domini>/api/cron/reminders` amb `CRON_SECRET` → l'app
+calcula els avisos que toquen → **Web Push** a cada dispositiu subscrit → el Service Worker mostra la notificació.
+
+Per rebre'ls en un dispositiu: obre Tempo (a l'iPhone, **des de la icona de la pantalla d'inici**), ves a
+*Ajustos → Notificacions → Activa* i prova *Prova des del servidor*.
 
 ## Desplegament a Vercel
 
@@ -496,3 +506,7 @@ $$);
 - Instal·lació com a app: targeta a Avui (instruccions per a iPhone, botó a Android), botó a la barra lateral de
   l'ordinador i secció a Ajustos; captura de `beforeinstallprompt` des de l'inici.
 - Manifest: eliminat `window-controls-overlay` (la barra de títol de l'app d'escriptori no tapa la interfície).
+- Notificacions sense dependre de cap ordinador: tasca `pg_cron` a Supabase cada minut (migració
+  `push_cron`) amb l'adreça i el secret a Vault; ruta `/api/push/test`.
+- Ajustos → Notificacions: estat real per dispositiu, botó *Prova des del servidor*, re-registre automàtic de la
+  subscripció i missatges d'error clars (abans podia dir "Activats" sense estar subscrit).
