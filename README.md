@@ -13,6 +13,7 @@
 
 ## Índex
 
+0. [Estat del projecte i com continuar](#estat-del-projecte-i-com-continuar) ← **comença aquí**
 1. [Què és Tempo](#què-és-tempo)
 2. [Funcionalitats](#funcionalitats)
 3. [Com s'utilitza](#com-sutilitza)
@@ -29,6 +30,92 @@
 14. [Configuració](#configuració)
 15. [Desplegament a Vercel](#desplegament-a-vercel)
 16. [Limitacions conegudes](#limitacions-conegudes)
+17. [Historial de canvis](#historial-de-canvis)
+
+---
+
+## Estat del projecte i com continuar
+
+> Aquesta secció es manté al dia amb cada canvi. Conté tot el necessari per reprendre el projecte en qualsevol
+> moment. **Els valors secrets no són aquí**: només el nom de cada variable i on obtenir-la.
+
+### On és cada cosa
+
+| Peça | Detall |
+|---|---|
+| Codi | GitHub: [davidarteee/tempo](https://github.com/davidarteee/tempo) · carpeta local `Documents/TEMPO` · branca `main` |
+| Base de dades i comptes | Supabase, organització **David Arté**, projecte **`tempo`** · ref `irkzvtnrofzbivolqwji` · regió `eu-west-1` · pla gratuït · [panell](https://supabase.com/dashboard/project/irkzvtnrofzbivolqwji) |
+| URL de Supabase | `https://irkzvtnrofzbivolqwji.supabase.co` |
+| Inici de sessió amb Google | Google Cloud, projecte **Tempo** · client OAuth "Aplicació web" (ID comença per `83590316489-`) · pantalla de consentiment en mode **prova** |
+| Allotjament | Vercel — *pendent de desplegar* |
+| Secrets | Fitxer `.env.local` (no és a git). Noms a [`.env.example`](.env.example) |
+| Desenvolupament local | `npm run dev -- -p 3101` → http://localhost:3101 (port registrat a Supabase i Google) |
+
+### Supabase
+
+- **Migracions aplicades** (en aquest ordre):
+  1. `20261108000000_init.sql` — taules, triggers (LWW, perfil i categories inicials), RLS, Realtime.
+  2. `20261108000100_hardening.sql` — `search_path` fix, revocació d'execució de funcions de trigger, índexs de
+     claus foranes.
+- **Afegir una migració nova:** crea `supabase/migrations/AAAAMMDDHHMMSS_nom.sql` i aplica-la:
+  - des del panell (*SQL Editor* → enganxa i executa), o
+  - amb la CLI: `npx supabase link --project-ref irkzvtnrofzbivolqwji` i `npx supabase db push`.
+  Després revisa *Advisors* (seguretat i rendiment) i anota-la aquí.
+- **Auth:** proveïdor Google activat amb el client OAuth de Google Cloud.
+  *URL Configuration*: Site URL `http://localhost:3101` · Redirect URLs `http://localhost:3101/auth/callback`
+  (cal afegir-hi el domini de Vercel en desplegar).
+- **Avisos acceptats a propòsit:** `notification_log` i `google_sync_records` tenen RLS sense polítiques (només hi
+  accedeix el servidor); "índexs no usats" mentre hi hagi poques dades.
+- **Claus:** URL i clau publicable a *Project Settings → API Keys* (són públiques); clau secreta a la mateixa
+  pàgina, secció *Secret keys* (només servidor).
+
+### Google Cloud
+
+- APIs activades: **Google Calendar API**.
+- Àmbits de la pantalla de consentiment: `calendar.events`, `calendar.readonly` (més `openid`/`email`).
+- Usuaris de prova: el compte del propietari. Per obrir l'app a altres persones caldria publicar-la i passar la
+  verificació de Google (àmbits sensibles de Calendar).
+- Client OAuth — orígens autoritzats: `http://localhost:3101` (+ domini de Vercel).
+  URI de redirecció: `https://irkzvtnrofzbivolqwji.supabase.co/auth/v1/callback`,
+  `http://localhost:3101/api/google/callback` (+ `https://<domini>/api/google/callback`).
+
+### Variables d'entorn (on és cada valor)
+
+| Variable | D'on surt |
+|---|---|
+| `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Supabase → *Project Settings → API Keys* |
+| `SUPABASE_SECRET_KEY` | Supabase → *API Keys → Secret keys* |
+| `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | Google Cloud → *Google Auth Platform → Clients → Tempo* (el secret no es pot tornar a veure: si es perd, se'n crea un de nou) |
+| `GOOGLE_STATE_SECRET`, `CRON_SECRET` | Cadenes aleatòries generades (`node -e "console.log(require('crypto').randomBytes(24).toString('base64url'))"`) |
+| `NEXT_PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY` | Generades amb `npx web-push generate-vapid-keys` (si es canvien, els dispositius s'han de tornar a subscriure) |
+| `VAPID_SUBJECT` | `mailto:` del propietari |
+| `NEXT_PUBLIC_APP_URL` | `http://localhost:3101` en local; el domini de Vercel en producció |
+
+### Què funciona i què falta
+
+**Fet i verificat**
+- Tota la interfície (Avui, Calendari en 5 vistes, Tasques, Ajustos), temes clar/fosc, mòbil i ordinador.
+- Esdeveniments, tasques, subtasques, categories, recurrència amb excepcions, arrossegar i deixar anar.
+- Base de dades a Supabase amb RLS; inici de sessió amb Google; sincronització pujada/baixada i temps real
+  provada entre l'app i la base de dades.
+- 18 proves unitàries (`npm test`), `typecheck`, `lint` i `build` sense errors.
+
+**Pendent**
+- [ ] Desplegar a Vercel i afegir el domini a Supabase i Google Cloud.
+- [ ] Provar la connexió amb Google Calendar (*Ajustos → Google Calendar → Connecta*).
+- [ ] Programar el cron de recordatoris (pg_cron, vegeu [Configuració](#recordatoris-push-cron-cada-minut)) i
+      provar les notificacions push amb l'app tancada.
+- [ ] Provar l'app instal·lada (PWA) a l'iPhone i a l'ordinador.
+
+### Convencions per continuar
+
+- Llegeix [`AGENTS.md`](AGENTS.md): aquesta versió de Next.js (16) té canvis respecte a versions anteriors
+  (p. ex. `middleware` es diu `proxy`); la documentació és a `node_modules/next/dist/docs/`.
+- Tota escriptura de dades passa per `src/lib/db/repo.ts` (mai directament a Supabase des de la interfície).
+- Els canvis d'esquema sempre amb una migració nova a `supabase/migrations/`; actualitza també
+  `src/lib/types.ts` i, si cal, l'índex de Dexie a `src/lib/db/local.ts` (pujant-ne la versió).
+- Abans de fer commit: `npm run typecheck && npm run lint && npm test && npm run build`.
+- Actualitza aquesta secció i l'[historial](#historial-de-canvis) amb cada canvi.
 
 ---
 
@@ -365,3 +452,15 @@ $$);
   algun dispositiu té l'app oberta.
 - Els recordatoris de Google dels esdeveniments de tot el dia es llegeixen però no s'hi envien.
 - Les notificacions push depenen del navegador i del sistema operatiu (vegeu [Notificacions](#notificacions)).
+
+## Historial de canvis
+
+### 2026-11-08
+- Primera versió completa de l'app: Avui, Calendari (dia/setmana/mes/any/llista), Tasques i Ajustos.
+- Capa local-first (IndexedDB + outbox), sincronització amb Supabase i Realtime.
+- Recurrència RRULE amb excepcions (només aquesta / aquesta i futures / totes) per a esdeveniments i tasques.
+- Integració bidireccional amb Google Calendar, Web Push, Service Worker i manifest PWA.
+- Projecte Supabase `tempo` creat; migracions `init` i `hardening` aplicades.
+- Inici de sessió amb Google configurat i provat.
+- Correccions: colors de text dels botons (regla CSS sense capa), avís duplicat en iniciar sessió.
+- Repositori a GitHub (`davidarteee/tempo`).
