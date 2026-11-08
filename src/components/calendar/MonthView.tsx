@@ -157,22 +157,8 @@ const MonthCell = memo(function MonthCell({ day, items, inMonth, isToday, select
 function MonthChip({ item }: { item: CalendarItem }) {
   const onPointerDown = (e: React.PointerEvent) =>
     dragHandle(e, () => ({ label: item.title, color: item.color, onDrop: (t) => void moveWithScope(item, t) }));
-  if (item.allDay) {
-    return (
-      <div
-        role="button"
-        tabIndex={0}
-        onPointerDown={onPointerDown}
-        onClick={() => openItem(item)}
-        onKeyDown={(e) => e.key === "Enter" && openItem(item)}
-        className={cn("flex h-[19px] shrink-0 cursor-pointer items-center gap-1 truncate rounded-[4px] px-1.5 text-[11.5px] font-semibold select-none", item.completed && "item-completed")}
-        style={eventStyle(item.color)}
-      >
-        {item.kind === "task" && <span className="size-[7px] shrink-0 rounded-full border-[1.5px] border-current" />}
-        <span className="item-title truncate">{item.title}</span>
-      </div>
-    );
-  }
+  // Tots els elements es mostren com una tira del color de la categoria.
+  // Les tasques conserven el cercle (casella) per distingir-les dels esdeveniments.
   return (
     <div
       role="button"
@@ -180,15 +166,12 @@ function MonthChip({ item }: { item: CalendarItem }) {
       onPointerDown={onPointerDown}
       onClick={() => openItem(item)}
       onKeyDown={(e) => e.key === "Enter" && openItem(item)}
-      className={cn("flex h-[19px] shrink-0 cursor-pointer items-center gap-1.5 rounded-[4px] px-1 text-[11.5px] select-none hover:bg-fill", item.completed && "item-completed")}
+      className={cn("flex h-[19px] shrink-0 cursor-pointer items-center gap-1 rounded-[4px] pr-1 pl-1.5 text-[11.5px] font-semibold select-none hover:brightness-[0.97]", item.completed && "item-completed")}
+      style={eventStyle(item.color)}
     >
-      {item.kind === "task" ? (
-        <span className="size-[8px] shrink-0 rounded-full border-[1.5px]" style={{ borderColor: item.color }} />
-      ) : (
-        <span className="size-[7px] shrink-0 rounded-full" style={{ background: item.color }} />
-      )}
+      {item.kind === "task" && <span className="size-[7px] shrink-0 rounded-full border-[1.5px] border-current" />}
       <span className="item-title min-w-0 flex-1 truncate">{item.title}</span>
-      <span className="tabular shrink-0 text-text-3">{fmtTime(item.start)}</span>
+      {!item.allDay && <span className="tabular shrink-0 font-normal opacity-70">{fmtTime(item.start)}</span>}
     </div>
   );
 }

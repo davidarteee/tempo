@@ -177,6 +177,8 @@ sense data (a la safata) i, quan rep una data, apareix automàticament al calend
 - Els elements **amb hora** van a la línia temporal; els de **tot el dia** van a un carril superior i no ocupen
   espai a la línia horària. Els esdeveniments de diversos dies es mostren com una barra contínua.
 - Els elements que se solapen es col·loquen en columnes perquè sempre siguin llegibles.
+- A la vista mensual (ordinador), tots els elements es mostren com una **tira del color de la seva categoria**
+  (amb l'hora a la dreta si en tenen); les tasques porten a més un **cercle** per distingir-les dels esdeveniments.
 - **Clic en un espai buit** → nou esdeveniment a aquella hora.
 - **Arrossegar** per moure (entre hores, entre dies o cap al carril de tot el dia) i **estirar la vora inferior**
   per canviar la durada. Al mòbil, mantén premut un moment per començar a arrossegar.
@@ -517,3 +519,5 @@ Per rebre'ls en un dispositiu: obre Tempo (a l'iPhone, **des de la icona de la p
 - Verificat en producció: 1 dispositiu subscrit, la tasca `tempo-reminders` s'executa cada minut amb resposta
   200 de l'app i el primer recordatori s'ha enviat.
 - Domini de producció anotat (`https://tempo-weld-nine.vercel.app`); app instal·lada al mòbil i a l'ordinador.
+- Vista mensual (ordinador): els elements amb hora també es mostren com a tira de color de la categoria (abans
+  eren un punt i text); les tasques conserven el cercle.
